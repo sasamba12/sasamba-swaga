@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>To-Do</title>
+    <style type="text/css">
+        body {
+            padding: 40px;
+            max-width: 600px;
+            margin: auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .controls {
+            gap: 10px;
+            display: flex;
+            margin-bottom: 10px;
+        }
+        input[type="text"], select {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid black;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            background-color: #e3d47d;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #bfb267;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: white;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.2s;
+        }
+        li.done {
+            text-decoration: line-through;
+        }
+        .priority.high {
+            color: #b8664f;
+        }
+        .priority.medium {
+            color: #d7db5e;
+        }
+        .priority.low {
+            color: #6da15c;
+        }
+        .info-bar {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+        }
+        .small-btn {
+            background-color: grey;
+        }
+        .small-btn:hover {
+            background-color: darkgrey;
+        }
+    </style>
+</head>
+<body>
+    <h1>Мой список задач на сегодня</h1>
+    <div class="controls">
+        <input type="text" id="taskInput" placeholder="введите текст">
+        <select id="prioritySelect" title="Выберите приоритет">
+            <option value="low">Низкий</option>
+            <option value="medium">Средний</option>
+            <option value="high">Высокий</option>
+        </select>
+        <button id="addTaskBtn">Добавить</button>
+    </div>
+    <div class="controls">
+        <select id="filterSelect" title="Фильтрация по приоритету">
+            <option value="all">Показать все</option>
+            <option value="low">Низкий</option>
+            <option value="medium">Средний</option>
+            <option value="high">Высокий</option>
+        </select>
+        <button id="clearDoneBtn" class="small-btn">Очистить выполненные</button>
+    </div>
+    <ul id="taskList"></ul>
+    <div class="info-bar">
+        <div>Всего: <span id="totalCount">0</span></div>
+        <div>Выполнено: <span id="doneCount">0</span></div>
+    </div>
+    <script type="text/javascript">
+        const taskInput = document.getElementById("taskInput");
+        const addTaskBtn = document.getElementById("addTaskBtn");
+        const taskList = document.getElementById("taskList");
+        const prioritySelect = document.getElementById("prioritySelect");
+        const filterSelect = document.getElementById("filterSelect");
+        const doneCount = document.getElementById("doneCount");
+        const totalCount = document.getElementById("totalCount");
+        const clearDoneBtn = document.getElementById("clearDoneBtn");
+
+        let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+
+        function renderTasks() {
+            taskList.innerHTML = "";
+            const filter = filterSelect.value;
+            let total = 0;
+            let done = 0;
+
+            tasks.forEach((task, index) => {
+                if (filter !== 'all' && task.priority !== filter) return;
+                total++;
+                if (task.done) done++;
+
+                const li = document.createElement("li");
+                const span = document.createElement("span");
+                span.textContent = task.text;
+                span.className = "priority " + task.priority;
+                span.title = "Приоритет: " + task.priority;
+                span.style.cursor = "pointer";
+                if (task.done) span.style.textDecoration = "line-through";
+                span.onclick = () => {
+                    task.done = !task.done;
+                    saveAndRender();
+                };
+
+                const delBtn = document.createElement("button");
+                delBtn.textContent = "☠";
+                delBtn.className = "small-btn";
+                delBtn.onclick = () => {
+                    tasks.splice(index, 1);
+                    saveAndRender();
+                };
+
+                li.appendChild(span);
+                li.appendChild(delBtn);
+                taskList.appendChild(li);
+            });
+
+            totalCount.textContent = total;
+            doneCount.textContent = done;
+        }
+
+        function saveAndRender() {
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+            renderTasks();
+        }
+
+        addTaskBtn.onclick = () => {
+            const text = taskInput.value.trim();
+            const priority = prioritySelect.value;
+            if (!text) {
+                alert("Введите задачу");
+                return;
+            }
+            tasks.push({ text, priority, done: false });
+            taskInput.value = "";
+            taskInput.focus();
+            saveAndRender();
+        };
+
+        filterSelect.onchange = renderTasks;
+
+        clearDoneBtn.onclick = () => {
+            tasks = tasks.filter(task => !task.done);
+            saveAndRender();
+        };
+
+        renderTasks();
+    </script>
+</body>
+</html>
